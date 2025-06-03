@@ -10,7 +10,6 @@ from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User, People, Planet, Favorite
 
-
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
@@ -38,11 +37,9 @@ def sitemap():
 
 @app.route('/user', methods=['GET'])
 def handle_hello():
-
     response_body = {
         "msg": "Hello, this is your GET /user response "
     }
-
     return jsonify(response_body), 200
 
 # PEOPLE ENDPOINTS
@@ -58,6 +55,25 @@ def get_person(people_id):
         return jsonify(person.serialize()), 200
     return jsonify({"error": "Person not found"}), 404
 
+@app.route('/people', methods=['POST'])
+def create_person():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+
+    name = data.get("name")
+    height = data.get("height")
+    gender = data.get("gender")
+
+    if not name or not height or not gender:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    new_person = People(name=name, height=height, gender=gender)
+    db.session.add(new_person)
+    db.session.commit()
+
+    return jsonify(new_person.serialize()), 201
+
 # PLANET ENDPOINTS
 @app.route('/planets', methods=['GET'])
 def get_all_planets():
@@ -70,6 +86,25 @@ def get_planet(planet_id):
     if planet:
         return jsonify(planet.serialize()), 200
     return jsonify({"error": "Planet not found"}), 404
+
+@app.route('/planets', methods=['POST'])
+def create_planet():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+
+    name = data.get("name")
+    terrain = data.get("terrain")
+    population = data.get("population")
+
+    if not name or not terrain or not population:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    new_planet = Planet(name=name, terrain=terrain, population=population)
+    db.session.add(new_planet)
+    db.session.commit()
+
+    return jsonify(new_planet.serialize()), 201
 
 # USER ENDPOINTS
 @app.route('/users', methods=['GET'])
@@ -120,7 +155,6 @@ def delete_favorite_people(people_id):
         db.session.commit()
         return jsonify({"done": True}), 200
     return jsonify({"error": "Favorite not found"}), 404
-
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
